@@ -3,13 +3,14 @@ import random
 from functools import partial
 from PIL import Image, ImageTk
 
-
 InGame = False
 StartingText = "Welcome to the Vending Machine! Click to begin!"
 SelectText = "Select an item using the keypad"
 VendingText = SelectText
 ButtonChoice = []
 ItemChoice = None
+yeswords = ["yes", "yea", "yeah", "yup", "y", "yarp", "mhm", "okay", "sure", "alright"]
+nowords = ["no", "n", "nah", "nope", "nein", "naw", "no thanks", "narp"]
 
 
 # to resize images if window resized (create copy for other images)
@@ -65,6 +66,8 @@ class VendingMachine:
         self.amount = 0
         self.items = []
         self.couldshake = False
+        self.shook = False
+        self.refund = False
 
     def addItem(self, item):
         self.items.append(item)
@@ -105,7 +108,6 @@ class VendingMachine:
                 break
         return ret
 
-
     def insertAmountForItem(self, item):
         price = item.price
         line = "Insert ${0:.2f}: ".format(price)
@@ -116,8 +118,17 @@ class VendingMachine:
         if self.amount < price:
             return True
 
+    def getRefund(self, item):
+        price = item.price
+        num = random.randit(0, 100)
+        amount = (num+price)*0.01
+        machine.addCash(amount)
+        TestButton("You were refunded ${0:.2f}!".format(amount))
+
+
+
 def vend():
-    #machine = VendingMachine()
+    # machine = VendingMachine()
     item1 = Item('goldfish', 1.5, 3)
     item2 = Item('carrot', 1.75, 3)
     item3 = Item('tomatos', 2.0, 3)
@@ -159,16 +170,22 @@ def BigLoopTime():
                     machine.insertAmountForItem(item)
                 else:
                     machine.buyItem(item)
-
+                # put random into buyItem, then different paths have different functions
                     if random.randint(0, 100) < 100:
                         TestButton('You did not get your item. '
-                                        'Would you like to shake the vending machine? ')
+                                   'Would you like to shake the vending machine? ')
                         machine.couldshake = True
-                        # maybe yes no buttons, then logic to quit
+                        if machine.shook:
+                            if random.randit(0, 100) < 50:
+                                TestButton("You died.")
+                                InGame = False
+                            else:
+                                TestButton("Would you like a refund?")
+                                if machine.refund:
+                                    machine.getRefund(item)
 
 
-                        # InGame = False
-                        # hot mess express down below...
+
                         """
                                                 else:
                                                     if random.randint(0, 100) < 50:
@@ -189,21 +206,20 @@ def BigLoopTime():
 
                     else:
                         # fix the print parts
-                        TestButton('You got ' +item.name)
+                        TestButton('You got ' + item.name)
                         print('You got ' + item.name)
-                        #a = input('buy something else? (y/n): ')
-                        #if True:
+                        # a = input('buy something else? (y/n): ')
+                        # if True:
                         #    InGame = False
 
-                        #else:
+                        # else:
                         #    pass
                         # ^^ changed 'continue' to 'pass' for now
 
             else:
                 print('Item not available. Select another item.')
-                #ItemChoice = None
+                # ItemChoice = None
                 pass
-
 
     mainwindow.after(1000, BigLoopTime)
 
@@ -225,16 +241,18 @@ def TestButton(words):
 # gets the text put into the entry box (like input() method)
 def get(event):
     def YesNoLogic():
-        print('that\'s no float')
+        global InGame
+        #print('that\'s no float')
         if input.lower() == "cat":
             vendingFrame.lift()
-        else:
-
-          """  
-        if input.lower() == "y":
-            do yes stuff
-            make list of "yes" and "no" for these checks
-            """
+        elif input.lower() in yeswords and machine.couldshake:
+            if machine.shook:
+                machine.refund = True
+                print('you shook it')
+            else:
+                machine.shook = True
+        elif input.lower() in nowords and machine.couldshake:
+            InGame = False
     input = FootEntry.get()
     try:
         money = float(input)
@@ -254,19 +272,19 @@ def ButtonSelect(selected):
     ButtonChoice.append(selected)
     if selected == 1: Button1["state"] = "disabled"
     if selected == 2: Button2["state"] = "disabled"
-    #continue for all keypad buttons
+    # continue for all keypad buttons
 
 
-#clear selection and re enable all keypad buttons
+# clear selection and re enable all keypad buttons
 def ClearSelection():
     global ButtonChoice
     ButtonChoice = []
     Button1["state"] = "normal"
     Button2["state"] = "normal"
-    #continue for all keypad buttons
+    # continue for all keypad buttons
 
 
-#checks what the selection is and does stuff based on that
+# checks what the selection is and does stuff based on that
 def ButtonHitEnter():
     global ItemChoice
     global items
@@ -292,9 +310,8 @@ def ButtonHitEnter():
         """
 
 
-
 mainwindow = tkinter.Tk()
-#photo = PhotoImage(file=r"C:\Users\miche\PycharmProjects\Vending\images\icon.png")
+# photo = PhotoImage(file=r"C:\Users\miche\PycharmProjects\Vending\images\icon.png")
 
 
 mainwindow.title("Test")
@@ -319,14 +336,14 @@ VendButton.bind('<Configure>', resize_image)
 VendText = tkinter.Label(vendingFrame, text=StartingText, font=("Arial", 22))
 VendText.grid(row=0, column=0, columnspan=10, sticky="nsew")
 
-#stuff for state 2
+# stuff for state 2
 
 header_Frame = tkinter.Frame(mainwindow)
 header_Frame.grid(row=0, column=0, columnspan=10, sticky="nsew")
 headerGrid = GridManager(header_Frame, "red")
 headerGrid.set_grid(1, 10)
 
-#Footer=Text Display and Entry frames
+# Footer=Text Display and Entry frames
 
 footerFrame = tkinter.Frame(mainwindow)
 footerFrame.grid(row=8, rowspan=2, column=0, columnspan=10, sticky="nsew")
@@ -382,21 +399,21 @@ ButtonClear.grid(row=2, column=3, sticky="nsew")
 # rightLabel.grid(row=0, column=1, rowspan=2, columnspan=3, sticky="nsew")
 
 
-#rightEntry = tkinter.Entry(rightFrame)
-#rightEntry.grid(row=0, column=1, columnspan=1)
-#rightEntry.bind('<Return>', get)
+# rightEntry = tkinter.Entry(rightFrame)
+# rightEntry.grid(row=0, column=1, columnspan=1)
+# rightEntry.bind('<Return>', get)
 
 leftFrame = tkinter.Frame(mainwindow)
 leftFrame.grid(row=1, column=0, rowspan=6, columnspan=6, sticky="nsew")
 leftGrid = GridManager(leftFrame, "yellow")
 leftGrid.set_grid(numofRows=6, numofColumns=6, borderwidth=0)
 
-#Bottom Frame full of buttons
+# Bottom Frame full of buttons
 
 BottomFrame = tkinter.Frame(mainwindow)
 BottomFrame.grid(row=7, column=0, rowspan=2, columnspan=10, sticky="nsew")
 BottomGrid = GridManager(BottomFrame, "black")
-BottomGrid.set_grid(2,10)
+BottomGrid.set_grid(2, 10)
 
 #### use class to make buttons the lazy way!!!!
 
@@ -404,8 +421,7 @@ machine = VendingMachine()
 if InGame is False:
     vendingFrame.lift()
 
-
 vend()
 BigLoopTime()
-#mainwindow.after(0, BigLoopTime)
+# mainwindow.after(0, BigLoopTime)
 mainwindow.mainloop()
