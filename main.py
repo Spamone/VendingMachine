@@ -64,6 +64,7 @@ class VendingMachine:
     def __init__(self):
         self.amount = 0
         self.items = []
+        self.couldshake = False
 
     def addItem(self, item):
         self.items.append(item)
@@ -109,12 +110,11 @@ class VendingMachine:
         price = item.price
         line = "Insert ${0:.2f}: ".format(price)
         TestButton(line)
-        while self.amount < price:
-            pass
 
-            #thing = float(input(line))
-            #self.amount = self.amount + thing
-
+    def tooPoor(self, item):
+        price = item.price
+        if self.amount < price:
+            return True
 
 def vend():
     #machine = VendingMachine()
@@ -152,64 +152,58 @@ def BigLoopTime():
     global InGame
     global machine
     if InGame:
-        """
-        # old test code
-        if ItemChoice == "Cheese":
-            TestButton('it cheese now ')
-            print('why not!!!')
-"""
-        if ItemChoice:
+        if ItemChoice and not machine.couldshake:
             if machine.containsItem(ItemChoice):
                 item = machine.getItem(ItemChoice)
+                if machine.tooPoor(item):
+                    machine.insertAmountForItem(item)
+                else:
+                    machine.buyItem(item)
+
+                    if random.randint(0, 100) < 100:
+                        TestButton('You did not get your item. '
+                                        'Would you like to shake the vending machine? ')
+                        machine.couldshake = True
+                        # maybe yes no buttons, then logic to quit
 
 
-
-                machine.insertAmountForItem(item)
-
-                machine.buyItem(item)
-
-                if random.randint(0, 100) < 50:
-
-                    if True:
-                        TestButton('You did not get your item. \n '
-                                   'Would you like to shake the vending machine? ')
-
-                    # maybe yes no buttons, then logic to quit
                         # InGame = False
+                        # hot mess express down below...
+                        """
+                                                else:
+                                                    if random.randint(0, 100) < 50:
+
+                                                        print('you died')
+                                                        InGame = False
+
+                                                    else:
+                                                        a = input('would you like a refund? (y/n): ')
+                                                        if a == 'n':
+                                                            InGame = False
+
+                                                        else:
+                                                            a = random.randint(0, 100)
+                                                            print("you got")
+                                                            print((thing + a) * 0.01)
+                        """
 
                     else:
-                        if random.randint(0, 100) < 50:
+                        # fix the print parts
+                        TestButton('You got ' +item.name)
+                        print('You got ' + item.name)
+                        #a = input('buy something else? (y/n): ')
+                        #if True:
+                        #    InGame = False
 
-                            print('you died')
-                            InGame = False
-
-                        else:
-                            a = input('would you like a refund? (y/n): ')
-                            if a == 'n':
-                                InGame = False
-
-                            else:
-                                a = random.randint(0, 100)
-                                print("you got")
-                                print((thing + a) * 0.01)
-
-                else:
-                    # fix the print parts
-                    TestButton('You got ' +item.name)
-                    print('You got ' + item.name)
-                    #a = input('buy something else? (y/n): ')
-                    #if True:
-                    #    InGame = False
-
-                    #else:
-                    #    pass
-                    # ^^ changed 'continue' to 'pass' for now
+                        #else:
+                        #    pass
+                        # ^^ changed 'continue' to 'pass' for now
 
             else:
                 print('Item not available. Select another item.')
                 #ItemChoice = None
                 pass
-            # ^^ changed 'continue' to 'pass' for now
+
 
     mainwindow.after(1000, BigLoopTime)
 
@@ -413,4 +407,5 @@ if InGame is False:
 
 vend()
 BigLoopTime()
+#mainwindow.after(0, BigLoopTime)
 mainwindow.mainloop()
