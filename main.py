@@ -59,6 +59,7 @@ class Item:
             # raise not item exception
             pass
         self.stock -= 1
+        print('stock debug')
 
 
 class VendingMachine:
@@ -74,15 +75,19 @@ class VendingMachine:
 
     def showItems(self):
         # keep for debugging
-
+        print('not now')
+        """
         for item in self.items:
             if item.stock == 0:
                 self.items.remove(item)
         for item in self.items:
             print(item.name, item.price)
+        """
 
     def addCash(self, money):
         self.amount = self.amount + money
+
+        #TestButton('Cash remaining: ${0:.2f}'.format(self.amount))
 
     def buyItem(self, item):
         if self.amount < item.price:
@@ -90,7 +95,9 @@ class VendingMachine:
         else:
             self.amount -= item.price
             item.buyFromStock()
-            print('Cash remaining: ' + str(self.amount))
+            #TestButton('Cash remaining: ' + str(self.amount))
+            chance = random.randint(0, 100)
+            mainwindow.after(3000, machine.willShake(chance))
 
     def containsItem(self, wanted):
         ret = False
@@ -118,12 +125,45 @@ class VendingMachine:
         if self.amount < price:
             return True
 
-    def getRefund(self, item):
-        price = item.price
-        num = random.randit(0, 100)
-        amount = (num+price)*0.01
-        machine.addCash(amount)
-        TestButton("You were refunded ${0:.2f}!".format(amount))
+    def getRefund(self, choice):
+        global ItemChoice
+        if machine.containsItem(choice):
+            item = machine.getItem(choice)
+            price = item.price
+            num = random.randint(0, 100)
+            amount = (num+price)*0.01
+            machine.addCash(amount)
+            TestButton("You were refunded ${0:.2f}!".format(amount))
+            mainwindow.after(1000, machine.reset)
+            machine.couldshake = False
+            machine.shook = False
+            machine.refund = False
+            ItemChoice = None
+            TestButton(SelectText)
+
+    def willShake(self, chance):
+        if chance > 0:
+            TestButton('You did not get your item. '
+                       'Would you like to shake the vending machine? ')
+            machine.couldshake = True
+        else:
+            print('you no shake')
+            #get you item code here
+
+    def youShook(self):
+        chance = random.randint(0, 100)
+        if chance > 0:
+            TestButton("Would you like a refund?")
+        else:
+            TestButton('You died.')
+            mainwindow.after(2000, machine.quit)
+
+    def reset(self):
+        TestButton(SelectText)
+
+    def quit(self):
+        vendingFrame.lift()
+
 
 
 
@@ -171,56 +211,13 @@ def BigLoopTime():
                 else:
                     machine.buyItem(item)
                 # put random into buyItem, then different paths have different functions
-                    if random.randint(0, 100) < 100:
-                        TestButton('You did not get your item. '
-                                   'Would you like to shake the vending machine? ')
-                        machine.couldshake = True
-                        if machine.shook:
-                            if random.randit(0, 100) < 50:
-                                TestButton("You died.")
-                                InGame = False
-                            else:
-                                TestButton("Would you like a refund?")
-                                if machine.refund:
-                                    machine.getRefund(item)
-
-
-
-                        """
-                                                else:
-                                                    if random.randint(0, 100) < 50:
-
-                                                        print('you died')
-                                                        InGame = False
-
-                                                    else:
-                                                        a = input('would you like a refund? (y/n): ')
-                                                        if a == 'n':
-                                                            InGame = False
-
-                                                        else:
-                                                            a = random.randint(0, 100)
-                                                            print("you got")
-                                                            print((thing + a) * 0.01)
-                        """
-
-                    else:
-                        # fix the print parts
-                        TestButton('You got ' + item.name)
-                        print('You got ' + item.name)
-                        # a = input('buy something else? (y/n): ')
-                        # if True:
-                        #    InGame = False
-
-                        # else:
-                        #    pass
-                        # ^^ changed 'continue' to 'pass' for now
-
             else:
                 print('Item not available. Select another item.')
                 # ItemChoice = None
                 pass
-
+    else:
+        vendingFrame.lift()
+        #add "quit" text, then after(1000, quitfunction)
     mainwindow.after(1000, BigLoopTime)
 
 
@@ -242,15 +239,19 @@ def TestButton(words):
 def get(event):
     def YesNoLogic():
         global InGame
+        global ItemChoice
         #print('that\'s no float')
         if input.lower() == "cat":
             vendingFrame.lift()
         elif input.lower() in yeswords and machine.couldshake:
             if machine.shook:
                 machine.refund = True
-                print('you shook it')
+                machine.getRefund(ItemChoice)
+                print('get that refund')
             else:
                 machine.shook = True
+                machine.youShook()
+                print('you shook it')
         elif input.lower() in nowords and machine.couldshake:
             InGame = False
     input = FootEntry.get()
@@ -262,7 +263,6 @@ def get(event):
     except ValueError:
         YesNoLogic()
     FootEntry.delete(0, "end")
-    # change the print line to something useful
 
 
 # this will take the selected item and give it to the main loop to do stuff with
@@ -319,7 +319,7 @@ mainwindow.geometry("640x704")
 mainGrid = GridManager(mainwindow)
 mainGrid.set_grid(10, 10)
 
-image = Image.open('C://Users//miche//PycharmProjects//Vending//images//icon.png')
+image = Image.open('C://Users//asain//PycharmProjects//vendingmachine//images//d20.png')
 copy_of_image = image.copy()
 photo = ImageTk.PhotoImage(image)
 
@@ -418,7 +418,7 @@ BottomGrid.set_grid(2, 10)
 #### use class to make buttons the lazy way!!!!
 
 machine = VendingMachine()
-if InGame is False:
+if not InGame:
     vendingFrame.lift()
 
 vend()
