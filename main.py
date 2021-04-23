@@ -319,7 +319,7 @@ mainwindow.geometry("640x704")
 mainGrid = GridManager(mainwindow)
 mainGrid.set_grid(10, 10)
 
-image = Image.open('C://Users//asain//PycharmProjects//vendingmachine//images//d20.png')
+image = Image.open('C://Users//miche//PycharmProjects//Vending//images//icon.png')
 copy_of_image = image.copy()
 photo = ImageTk.PhotoImage(image)
 
